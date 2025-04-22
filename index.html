@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>真和株式会社 - Shinwa Inc.</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -32,12 +33,29 @@
       border-bottom: 2px solid #ddd;
       padding-bottom: 0.3em;
     }
+    .info-box {
+      display: flex;
+      flex-direction: row;
+      gap: 2em;
+      margin-top: 1em;
+      background: #e0f7fa;
+      padding: 1em;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #bbb;
+      align-items: center;
+    }
+    .info-box > div {
+      flex: 1;
+    }
     footer {
       text-align: center;
       font-size: 0.9em;
       color: #666;
       margin-top: 2em;
       padding-bottom: 2em;
+    }
+    canvas {
+      margin-top: 1em;
     }
   </style>
 </head>
@@ -61,6 +79,14 @@
     <li>Webサイト・ECサイト制作</li>
   </ul>
 
+  <h2>天気予報</h2>
+  <div class="info-box">
+    <div id="location">都市情報を取得中...</div>
+    <div id="weather">天気情報を取得中...</div>
+  </div>
+
+  <canvas id="forecastChart" width="700" height="300"></canvas>
+
   <h2>お問い合わせ</h2>
   <p>サービスに関するご相談・ご依頼は以下のメールアドレスまでお気軽にご連絡ください。</p>
   <p>Email: info@shinwa.co.jp</p>
@@ -69,6 +95,83 @@
 <footer>
   &copy; 2025 真和株式会社 (Shinwa Inc.) All rights reserved.
 </footer>
+
+<script>
+  const IPINFO_TOKEN = "b6980ade79d1cf";
+  const OPENWEATHER_API_KEY = "aa4fe867d9343f7b849792b1c9985303";
+
+  fetch(`https://ipinfo.io/json?token=${IPINFO_TOKEN}`)
+    .then(res => res.json())
+    .then(data => {
+      const city = data.city;
+      const [lat, lon] = data.loc.split(',');
+
+      document.getElementById('location').innerHTML = `<strong>現在の都市:</strong> ${city}`;
+
+      // 当前天气
+      fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_API_KEY}&units=metric&lang=ja`)
+        .then(res => res.json())
+        .then(weather => {
+          const desc = weather.weather[0].description;
+          const icon = weather.weather[0].icon;
+          const temp = weather.main.temp;
+          const wind = weather.wind.speed;
+
+          document.getElementById('weather').innerHTML = `
+            <strong>天気:</strong> ${desc}<br>
+            <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="icon"><br>
+            <strong>気温:</strong> ${temp} ℃<br>
+            <strong>風速:</strong> ${wind} m/s
+          `;
+        });
+
+      // 3時間ごとの予報（24時間分）
+      fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_API_KEY}&units=metric&lang=ja`)
+        .then(res => res.json())
+        .then(forecast => {
+          const labels = [];
+          const temps = [];
+
+          forecast.list.slice(0, 8).forEach(item => {
+            const time = new Date(item.dt * 1000);
+            const hours = time.getHours().toString().padStart(2, '0');
+            labels.push(`${hours}時`);
+            temps.push(item.main.temp);
+          });
+
+          const ctx = document.getElementById('forecastChart').getContext('2d');
+          new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: '気温（℃）',
+                data: temps,
+                borderColor: '#0c4a6e',
+                backgroundColor: 'rgba(12, 74, 110, 0.2)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: {
+                  display: true,
+                  position: 'top'
+                }
+              },
+              scales: {
+                y: {
+                  beginAtZero: false
+                }
+              }
+            }
+          });
+        });
+    });
+</script>
 
 </body>
 </html>
