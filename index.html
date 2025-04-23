@@ -57,6 +57,19 @@
     canvas {
       margin-top: 1em;
     }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1em;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.5em;
+      text-align: center;
+    }
+    th {
+      background: #e0f7fa;
+    }
   </style>
 </head>
 <body>
@@ -86,6 +99,8 @@
   </div>
 
   <canvas id="forecastChart" width="700" height="300"></canvas>
+
+  <div id="precipitationTableContainer"></div>
 
   <h2>お問い合わせ</h2>
   <p>サービスに関するご相談・ご依頼は以下のメールアドレスまでお気軽にご連絡ください。</p>
@@ -131,12 +146,17 @@
         .then(forecast => {
           const labels = [];
           const temps = [];
+          const times = [];
+          const pops = [];
 
           forecast.list.slice(0, 8).forEach(item => {
             const time = new Date(item.dt * 1000);
             const hours = time.getHours().toString().padStart(2, '0');
-            labels.push(`${hours}時`);
+            const label = `${hours}時`;
+            labels.push(label);
             temps.push(item.main.temp);
+            times.push(label);
+            pops.push((item.pop * 100).toFixed(1)); // pop 是 0~1 之间的小数
           });
 
           const ctx = document.getElementById('forecastChart').getContext('2d');
@@ -169,6 +189,17 @@
               }
             }
           });
+
+          // 表格形式の降水確率表示
+          let tableHTML = `
+            <table>
+              <tr><th>時間</th><th>降水確率</th></tr>
+          `;
+          for (let i = 0; i < times.length; i++) {
+            tableHTML += `<tr><td>${times[i]}</td><td>${pops[i]}%</td></tr>`;
+          }
+          tableHTML += `</table>`;
+          document.getElementById('precipitationTableContainer').innerHTML = tableHTML;
         });
     });
 </script>
