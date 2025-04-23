@@ -100,7 +100,7 @@
   const IPINFO_TOKEN = "b6980ade79d1cf";
   const OPENWEATHER_API_KEY = "aa4fe867d9343f7b849792b1c9985303";
 
-  fetch(https://ipinfo.io/json?token=${IPINFO_TOKEN})
+  fetch(`https://ipinfo.io/json?token=${IPINFO_TOKEN}`)
     .then(res => res.json())
     .then(data => {
       const city = data.city;
