@@ -129,7 +129,7 @@
         .then(weather => {
           const desc = weather.weather[0].description;
           const icon = weather.weather[0].icon;
-          const temp = weather.main.temp;
+          const temp = weather.main.feels_like;
           const wind = weather.wind.speed;
 
           document.getElementById('weather').innerHTML = `
